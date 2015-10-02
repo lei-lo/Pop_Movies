@@ -1,0 +1,26 @@
+<resources>
+    <string name="app_name">Pop Movies</string>
+
+    <string name="action_sort">Sort By</string>
+    <string name="hello_world">Hello world!</string>
+    
+    <!-- default detail strings -->
+    <string name="detail_date_default">2015</string>
+    <string name="detail_vote_default">10/10</string>
+    <string name="detail_overview_default">This is where the movie overview will go.</string>
+
+    <string name="detail_content_description">Movie Poster Image</string>
+
+    <!-- sorting options -->
+    <string name="pref_sort_key">sort</string>
+    <string name="pref_sort_popularity">popularity.desc</string>
+    <string name="pref_sort_rating">vote_average.desc</string>
+
+    <!-- TODO remove
+    Insert API key here -->
+    <string name="api_key">e6d9cf6289e85395c756e514d99f5a35</string>
+    <string name="action_settings">Settings</string>
+   
+    <string name="title_activity_detail">Details</string>
+    
+</resources>
