@@ -13,8 +13,6 @@ import java.util.List;
 
 public class PosterAdapter extends ArrayAdapter<Movie> {
 
-    private static final String LOG_TAG = PosterAdapter.class.getSimpleName();
-
     public PosterAdapter(Activity context, List<Movie> movies) {
         super(context, 0, movies);
     }

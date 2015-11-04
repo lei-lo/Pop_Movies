@@ -12,8 +12,33 @@ public class Movie implements Parcelable {
     private String mVoteAverage;
     private String mOverview;
 
+    public String getId() {
+        return mId;
+    }
+
+    public String getImagePath() {
+        return mImagePath;
+    }
+
+    public String getTitle() {
+        return mTitle;
+    }
+
+    public String getReleaseDate() {
+        return mReleaseDate;
+    }
+
+    public String getVoteAverage() {
+        return mVoteAverage;
+    }
+
+    public String getOverview() {
+        return mOverview;
+    }
+
     public Movie() {
     }
+
     public Movie(String id,
                  String imagePath,
                  String title,
@@ -69,48 +94,24 @@ public class Movie implements Parcelable {
         dest.writeString(mOverview);
     }
 
-    public String getId() {
-        return mId;
-    }
-
     public void setId(String mId) {
         this.mId = mId;
-    }
-
-    public String getImagePath() {
-        return mImagePath;
     }
 
     public void setImagePath(String mImagePath) {
         this.mImagePath = mImagePath;
     }
 
-    public String getTitle() {
-        return mTitle;
-    }
-
     public void setTitle(String mTitle) {
         this.mTitle = mTitle;
-    }
-
-    public String getReleaseDate() {
-        return mReleaseDate;
     }
 
     public void setReleaseDate(String mReleaseDate) {
         this.mReleaseDate = mReleaseDate;
     }
 
-    public String getVoteAverage() {
-        return mVoteAverage;
-    }
-
     public void setVoteAverage(String mVoteAverage) {
         this.mVoteAverage = mVoteAverage;
-    }
-
-    public String getOverview() {
-        return mOverview;
     }
 
     public void setOverview(String mOverview) {

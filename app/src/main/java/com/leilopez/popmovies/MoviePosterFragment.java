@@ -1,17 +1,12 @@
 package com.leilopez.popmovies;
 
-import android.app.AlertDialog;
-import android.app.Dialog;
-import android.content.DialogInterface;
-import android.support.v4.app.DialogFragment;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
-
-import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -21,6 +16,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.GridView;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -36,11 +32,9 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * A fragment containing movie posters.
+ * Main fragment that contains list of movie fragments.
  */
-public class MoviePosterFragment extends Fragment {
-
-    private static final String LOG_TAG = MoviePosterFragment.class.getSimpleName();
+public class MoviePosterFragment extends Fragment implements SortDialogFragment.OnDialogSortListener {
 
     private PosterAdapter mPosterAdapter;
 
@@ -51,7 +45,6 @@ public class MoviePosterFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
-
     }
 
     @Override
@@ -61,58 +54,30 @@ public class MoviePosterFragment extends Fragment {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
+
         if (id == R.id.action_sort) {
-            DialogFragment dialog = new SortDialog();
-            dialog.show(getFragmentManager(), getString(R.string.action_sort)); //TODO what is this string for?
+            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getContext());
+            int selected = sp.getInt(getString(R.string.pref_sort_key), 0);
+
+            SortDialogFragment dialog = SortDialogFragment.newInstance(selected);
+            dialog.setDialogSelectorCallback(this);
+            dialog.show(getFragmentManager(), getString(R.string.action_sort));
             return true;
         }
+
         return super.onOptionsItemSelected(item);
-    }
-
-    public static class SortDialog extends DialogFragment { //TODO close when area around dialog is clicked
-        @Override
-        public Dialog onCreateDialog(Bundle savedInstanceState) {
-            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-            builder.setTitle(R.string.action_sort)
-                    .setSingleChoiceItems(R.array.sort_array, 0, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            if (which == 0) {
-                                // TODO set shared prefs, call update movie
-                            } else {
-                                // TODO set shared prefs, call movie
-                            }
-                        }
-                    });
-
-            return builder.create();
-        }
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        // TODO replace with real placeholder images
         List<Movie> temp = new ArrayList<>();
-        temp.add(new Movie("76341",
-                        "http://image.tmdb.org/t/p/w185//nBNZadXqJSdt05SHLqgT0HuC5Gm.jpg",
-                        "Title", "Date", "Average", "Overview"));
-        temp.add(new Movie("76341",
-                "http://image.tmdb.org/t/p/w185//nBNZadXqJSdt05SHLqgT0HuC5Gm.jpg",
-                "Title", "Date", "Average", "Overview"));
-        temp.add(new Movie("76341",
-                "http://image.tmdb.org/t/p/w185//nBNZadXqJSdt05SHLqgT0HuC5Gm.jpg",
-                "Title", "Date", "Average", "Overview"));
         mPosterAdapter = new PosterAdapter(getActivity(), temp);
 
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
-        // Get a reference to the GridView, and attach adapter to it.
         GridView gridView = (GridView) rootView.findViewById(R.id.movie_grid);
         gridView.setAdapter(mPosterAdapter);
 
@@ -122,7 +87,7 @@ public class MoviePosterFragment extends Fragment {
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
                 Movie movie = mPosterAdapter.getItem(position);
                 Intent intent = new Intent(getActivity(), DetailActivity.class)
-                        .putExtra("movie", movie);
+                        .putExtra(getString(R.string.parcel_key), movie);
                 startActivity(intent);
             }
         });
@@ -130,18 +95,29 @@ public class MoviePosterFragment extends Fragment {
         return rootView;
     }
 
-    private void updateMovies() {
-        String sort = "popularity.desc"; //TODO get from shared prefs
+    public void updateMovies(int selected) {
+        String sort = getString(R.string.pref_sort_rating);;
+        if (selected == 0) {
+            sort = getString(R.string.pref_sort_popularity);
+        }
+
         FetchMoviesTask fetchMoviesTask = new FetchMoviesTask();
         fetchMoviesTask.execute(sort);
+
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getContext());
+        SharedPreferences.Editor editor = sp.edit();
+        editor.putInt(getString(R.string.pref_sort_key), selected);
+        editor.apply();
     }
 
     @Override
     public void onStart() {
-
-        updateMovies();
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getContext());
+        int selected = sp.getInt(getString(R.string.pref_sort_key), 0);
+        updateMovies(selected);
         super.onStart();
     }
+
 
     public class FetchMoviesTask extends AsyncTask<String, Void, Movie[]> {
 
@@ -154,8 +130,6 @@ public class MoviePosterFragment extends Fragment {
         private final String MDB_VOTE = "vote_average";
         private final String MDB_OVERVIEW = "overview";
         private final String MDB_ID = "id";
-        // TODO change "w185" value based on phone or tablet!
-        private final String MDB_IMAGE_PATH_PREFIX = "http://image.tmdb.org/t/p/w185/";
 
         private Movie[] getMovieDataFromJson(String moviesJsonStr) throws JSONException {
 
@@ -169,12 +143,13 @@ public class MoviePosterFragment extends Fragment {
                 movieInfo = resultsArray.getJSONObject(i);
                 Log.v(LOG_TAG, movieInfo.getString(MDB_IMAGE_PATH));
                 Movie movie = new Movie(movieInfo.getString(MDB_ID),
-                                        MDB_IMAGE_PATH_PREFIX + movieInfo.getString(MDB_IMAGE_PATH),
+                                        getString(R.string.image_path_prefix) +
+                                                getString(R.string.image_path_size) +
+                                                movieInfo.getString(MDB_IMAGE_PATH),
                                         movieInfo.getString(MDB_TITLE),
                                         movieInfo.getString(MDB_RELEASE),
                                         movieInfo.getString(MDB_VOTE),
                                         movieInfo.getString(MDB_OVERVIEW));
-                Log.v(LOG_TAG, movie.getTitle());
                 results[i] = movie;
             }
             return results;
@@ -183,47 +158,31 @@ public class MoviePosterFragment extends Fragment {
         @Override
         protected Movie[] doInBackground(String ... params) {
 
-            // These two need to be declared outside the try/catch
-            // so that they can be closed in the finally block.
             HttpURLConnection urlConnection = null;
             BufferedReader reader = null;
 
-            // Will contain the raw JSON response as a string.
             String moviesJsonStr = null;
 
-            // TODO add check that these exist
             String sort = params[0];
-            //String sort = "popularity.desc";
-            //SharedPreferences sharedPrefs =
-            //        PreferenceManager.getDefaultSharedPreferences(getActivity());
-            //String sort = sharedPrefs.getString(getString(R.string.pref_sort_key),getString(R.string.pref_sort_popularity));
-            String apiKey = "placeholder";
 
             try {
                 // Construct the URL for themovieDB query
-                final String MOVIES_BASE_URL =
-                        "http://api.themoviedb.org/3/discover/movie?";
-                final String SORT_PARAM = "sort_by";
-                final String API_KEY_PARAM = "api_key";
-
-                Uri builtUri = Uri.parse(MOVIES_BASE_URL).buildUpon()
-                        .appendQueryParameter(SORT_PARAM, sort) //todo change
-                        .appendQueryParameter(API_KEY_PARAM, apiKey) //todo change
+                Uri builtUri = Uri.parse(getString(R.string.main_base_url)).buildUpon()
+                        .appendQueryParameter(getString(R.string.sort_label), sort)
+                        .appendQueryParameter(getString(R.string.sort_vote_count), getString(R.string.sort_vote_count_value))
+                        .appendQueryParameter(getString(R.string.api_label), getString(R.string.api_key))
                         .build();
 
                 URL url = new URL(builtUri.toString());
                 Log.v(LOG_TAG, url.toString());
 
-                // Create the request to themovieDB, and open the connection
                 urlConnection = (HttpURLConnection) url.openConnection();
                 urlConnection.setRequestMethod("GET");
                 urlConnection.connect();
 
-                // Read the input stream into a String
                 InputStream inputStream = urlConnection.getInputStream();
                 StringBuffer buffer = new StringBuffer();
                 if (inputStream == null) {
-                    // Nothing to do.
                     return null;
                 }
                 reader = new BufferedReader(new InputStreamReader(inputStream));
@@ -235,14 +194,11 @@ public class MoviePosterFragment extends Fragment {
                 }
 
                 if (buffer.length() == 0) {
-                    // Stream was empty.  No point in parsing.
                     return null;
                 }
                 moviesJsonStr = buffer.toString();
             } catch (IOException e) {
                 Log.e(LOG_TAG, "Error ", e);
-                // If the code didn't successfully get the data, there's no point in attempting
-                // to parse it.
                 return null;
             } finally {
                 if (urlConnection != null) {
@@ -264,7 +220,6 @@ public class MoviePosterFragment extends Fragment {
                 e.printStackTrace();
             }
 
-            // This will only happen if there was an error getting or parsing the forecast.
             return null;
         }
 

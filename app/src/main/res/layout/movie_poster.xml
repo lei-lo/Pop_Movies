@@ -2,8 +2,8 @@
 <ImageView
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/poster_image"
+    style="@style/poster_background"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:minHeight="300dp"
-    />
-<!--TODO make this fit properly -->
+    android:adjustViewBounds="true"
+    android:contentDescription="@string/poster_content_description"/>
